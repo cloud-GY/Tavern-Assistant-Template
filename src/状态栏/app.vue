@@ -1,11 +1,11 @@
 <template>
   <div
-    class="relative mx-auto flex w-fit flex-col items-center overflow-x-hidden rounded-3xl transition-all duration-700"
+    class="relative mx-auto flex w-fit max-w-[100vw] flex-col items-center overflow-hidden rounded-3xl transition-all duration-700 sm:max-w-xl"
     :style="{ background: state.ui.themes[state.ui.currentTheme].value }"
   >
     <!-- 顶部状态栏 -->
     <nav
-      class="glass sticky top-0 z-[100] flex w-full items-center justify-between px-4 py-2 text-[11px] font-medium shadow-xl"
+      class="glass sticky top-0 z-[100] flex w-full items-center justify-between px-4 py-2 text-[8px] font-medium shadow-xl sm:text-[8px]"
     >
       <div class="flex items-center gap-4">
         <span class="flex items-center gap-1.5 opacity-80"
@@ -53,12 +53,12 @@
           <transition name="fade">
             <div
               v-if="state.ui.settingsOpen"
-              class="glass-card absolute top-full right-0 z-[200] mt-2 w-56 overflow-hidden rounded-xl border border-pink-500/20 shadow-2xl"
+              class="glass-card absolute top-full right-0 z-[200] mt-2 w-56 overflow-hidden rounded-xl border border-pink-500/30 shadow-2xl"
             >
               <div class="space-y-5 p-4">
                 <div>
                   <div
-                    class="mb-3 border-b border-white/5 pb-1 text-[9px] font-bold tracking-widest text-pink-500/60 uppercase"
+                    class="mb-3 border-b border-white/20 pb-1 text-[9px] font-bold tracking-widest text-pink-500/60 uppercase"
                   >
                     预设偏好
                   </div>
@@ -73,7 +73,7 @@
 
                 <div>
                   <div
-                    class="mb-3 border-b border-white/5 pb-1 text-[9px] font-bold tracking-widest text-pink-500/60 uppercase"
+                    class="mb-3 border-b border-white/20 pb-1 text-[9px] font-bold tracking-widest text-pink-500/60 uppercase"
                   >
                     视觉环境
                   </div>
@@ -85,7 +85,7 @@
                         'flex h-8 items-center justify-center rounded-lg border text-[9px] font-medium transition-all',
                         state.ui.currentTheme === key
                           ? 'border-pink-500 bg-pink-500/20 text-pink-300 shadow-[0_0_8px_rgba(236,72,153,0.2)]'
-                          : 'border-white/10 text-white/60 hover:border-white/30',
+                          : 'border-white/20 text-white/60 hover:border-white/30',
                       ]"
                       @click="state.ui.currentTheme = key"
                     >
@@ -125,7 +125,7 @@
           </svg>
         </button>
         <transition name="collapse">
-          <div v-if="state.ui.expanded.characters" class="space-y-4 border-t border-white/5 px-4 pt-3 pb-4">
+          <div v-if="state.ui.expanded.characters" class="space-y-4 border-t border-white/10 px-4 pt-3 pb-4">
             <div v-for="(char, index) in state.characters" :key="index" class="group relative">
               <div class="mb-1.5 flex items-center justify-between">
                 <span class="text-[13px] font-bold text-white/90">{{ char.name }}</span>
@@ -133,14 +133,14 @@
                   char.status
                 }}</span>
               </div>
-              <div class="grid grid-cols-2 gap-4 rounded-xl border border-white/10 bg-black/30 p-3">
+              <div class="grid grid-cols-2 gap-4 rounded-xl border border-white/20 bg-black/30 p-3">
                 <div>
                   <div class="mb-1.5 text-[8px] font-bold tracking-wider text-slate-500 uppercase">具体状态</div>
                   <div class="flex flex-wrap gap-1.5">
                     <span
                       v-for="tag in char.tags"
                       :key="tag"
-                      class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300"
+                      class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-slate-300"
                       >{{ tag }}</span
                     >
                   </div>
@@ -178,7 +178,7 @@
           </svg>
         </button>
         <transition name="collapse">
-          <div v-if="state.ui.expanded.matters" class="space-y-5 border-t border-white/5 px-4 pt-3 pb-4">
+          <div v-if="state.ui.expanded.matters" class="space-y-5 border-t border-white/10 px-4 pt-3 pb-4">
             <div v-if="state.system.progress !== undefined">
               <div class="mb-2 flex items-end justify-between">
                 <div class="flex flex-col">
@@ -196,7 +196,7 @@
                   </span>
                 </div>
               </div>
-              <div class="h-2 w-full overflow-hidden rounded-full border border-white/5 bg-black/40">
+              <div class="h-2 w-full overflow-hidden rounded-full border border-white/10 bg-black/40">
                 <div
                   class="pink-glow h-full bg-gradient-to-r from-pink-600 to-pink-400 transition-all duration-1000 ease-out"
                   :style="{ width: state.system.progress + '%' }"
@@ -232,7 +232,7 @@
       <!-- 剧情走向面板 -->
       <section
         v-if="state.story.potentialOutcomes.length > 0 || state.story.options.length > 0"
-        class="glass-card rounded-2xl border-white/10 p-5"
+        class="glass-card rounded-2xl border-white/20 p-5"
       >
         <h2 class="mb-5 flex items-center gap-2 text-[11px] font-black tracking-[0.3em] text-pink-500 uppercase">
           <span class="h-3.5 w-1 rounded-full bg-pink-500"></span>
@@ -242,7 +242,7 @@
           <div
             v-for="(outcome, index) in state.story.potentialOutcomes"
             :key="index"
-            class="group flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[12px] transition-all hover:border-pink-500/40 hover:bg-white/10"
+            class="group flex cursor-pointer items-start gap-3 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-[12px] transition-all hover:border-pink-500/40 hover:bg-white/10"
             :class="{ 'border-pink-500/60 bg-pink-500/10': state.ui.selectedOutcome === outcome }"
             @click="selectOutcome(outcome)"
           >
@@ -311,8 +311,8 @@
         @click="state.ui.floorPickerOpen = false"
       >
         <div class="glass-card flex max-h-[70vh] w-full max-w-xs flex-col overflow-hidden rounded-3xl" @click.stop>
-          <div class="flex items-center justify-between border-b border-white/10 p-4">
-            <span class="text-sm font-bold tracking-widest uppercase text-slate-400">选择楼层</span>
+          <div class="flex items-center justify-between border-b border-white/20 p-4">
+            <span class="text-sm font-bold tracking-widest text-slate-400 uppercase">选择楼层</span>
             <button class="opacity-50 hover:opacity-100" @click="state.ui.floorPickerOpen = false">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -699,13 +699,13 @@ body {
   background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .glass-card {
   background: rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 8px 32px -2px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
 }
@@ -756,10 +756,10 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
   transition: 0.4s;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 .slider:before {
   position: absolute;
