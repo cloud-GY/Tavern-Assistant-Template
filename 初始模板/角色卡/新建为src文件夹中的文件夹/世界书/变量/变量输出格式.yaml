@@ -14,7 +14,11 @@
     <JSONPatch>
     [
       { "op": "replace", "path": "${/path/to/variable}", "value": "${new_value}" },
+<<<<<<< HEAD
       { "op": "add", "path": "${/path/to/object/new_key}", "value": "${new_value}" }
+=======
+      { "op": "add", "path": "${/path/to/object/new_key}", "value": "${new_value}" },
+>>>>>>> 4ac7bf5d47e725f28c4278aa1dbabc21eb9be37e
       { "op": "remove", "path": "${/path/to/array/0}" },
       ...
     ]
