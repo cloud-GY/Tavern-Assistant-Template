@@ -14,6 +14,17 @@
         <span class="flex items-center gap-1 font-mono tracking-wider text-pink-400"
           >⏰ <span>{{ state.world.time || '未知时间' }}</span></span
         >
+        <span v-if="state.world.weather" class="flex items-center gap-1 opacity-40">
+          <span>{{ weatherIcon }}</span>
+          <span class="text-slate-300">{{ state.world.weather }}</span>
+        </span>
+        <span
+          v-if="state.world.entropy"
+          class="flex items-center gap-1 opacity-10 transition-opacity duration-500 hover:opacity-100"
+        >
+          <span class="text-[7px] leading-none font-bold text-slate-500 uppercase">熵</span>
+          <span :class="['font-mono text-[8px] leading-none font-black', entropyColor]">{{ state.world.entropy }}</span>
+        </span>
       </div>
 
       <div class="flex items-center gap-3">
@@ -133,21 +144,18 @@
                   char.status
                 }}</span>
               </div>
-              <div class="grid grid-cols-2 gap-4 rounded-xl border border-white/20 bg-black/30 p-3">
-                <div>
-                  <div class="mb-1.5 text-[8px] font-bold tracking-wider text-slate-500 uppercase">具体状态</div>
-                  <div class="flex flex-wrap gap-1.5">
-                    <span
-                      v-for="tag in char.tags"
-                      :key="tag"
-                      class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-slate-300"
-                      >{{ tag }}</span
-                    >
+              <div class="grid grid-cols-1 gap-3 rounded-xl border border-white/20 bg-black/30 p-3">
+                <div v-if="char.description">
+                  <div class="mb-1 text-[8px] font-bold tracking-wider text-slate-500 uppercase">角色简述</div>
+                  <div class="text-[11px] leading-relaxed break-words whitespace-pre-wrap text-slate-300">
+                    {{ char.description }}
                   </div>
                 </div>
-                <div class="text-right">
-                  <div class="mb-1.5 text-[8px] font-bold tracking-wider text-slate-500 uppercase">态度</div>
-                  <div class="text-[11px] leading-tight font-medium text-pink-300">{{ char.attitude }}</div>
+                <div class="flex justify-between border-t border-white/5 pt-2">
+                  <div class="text-left">
+                    <div class="mb-1 text-[8px] font-bold tracking-wider text-slate-500 uppercase">态度</div>
+                    <div class="text-[11px] leading-tight font-medium text-pink-300">{{ char.attitude }}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -205,7 +213,7 @@
             </div>
 
             <div
-              v-if="state.system.importantMatter"
+              v-if="state.system.importantMatters.length > 0"
               class="rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-transparent p-3.5"
             >
               <div
@@ -221,9 +229,16 @@
                 </svg>
                 重要事项
               </div>
-              <p class="text-[12px] leading-relaxed text-slate-200 italic opacity-90">
-                {{ state.system.importantMatter }}
-              </p>
+              <ul class="space-y-1.5">
+                <li
+                  v-for="(matter, idx) in state.system.importantMatters"
+                  :key="idx"
+                  class="flex items-start gap-2 text-[12px] leading-relaxed text-slate-200 italic opacity-90"
+                >
+                  <span class="shrink-0 text-pink-500/60">·</span>
+                  <span>{{ matter }}</span>
+                </li>
+              </ul>
             </div>
           </div>
         </transition>
@@ -348,7 +363,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, watch, watchEffect } from 'vue';
+import { computed, onMounted, reactive, watch, watchEffect } from 'vue';
 
 // Simple deep clone to avoid klona dependency in browser
 function deepClone<T>(obj: T): T {
@@ -357,8 +372,8 @@ function deepClone<T>(obj: T): T {
 
 interface Character {
   name: string;
+  description: string;
   status: string;
-  tags: string[];
   attitude: string;
 }
 
@@ -371,6 +386,8 @@ interface State {
   world: {
     time: string;
     location: string;
+    weather: string;
+    entropy: string;
   };
   characters: Character[];
   system: {
@@ -378,7 +395,7 @@ interface State {
     progressLabel?: string;
     progressStatus?: string;
     progressDelta?: number;
-    importantMatter?: string;
+    importantMatters: string[];
   };
   story: {
     potentialOutcomes: string[];
@@ -404,30 +421,28 @@ interface State {
 
 const chatdata = `
 <Status_block>
-  时间:  Day-3 22:15
-  地点:  霓虹市 · 废弃工业区
+  时间: Day-3 22:15
+  地点: 霓虹市 · 废弃工业区
+  天气: 阴天
+  熵值: 2
 
 名字: 艾莉丝
-         状态: 警戒 / 义体过热
-         具体状态:
-          - 视觉传感器受损
-          - 核心温度 85°C
-        对xxx的态度: 信任但充满疑虑
+        角色简述: 这里的义体医生，性格冷淡但医术高超。
+        状态: 警戒 / 义体过热
+        对你的态度: 信任但充满疑虑
 名字: 由莉
-         状态: 担忧
-         具体状态:
-          - 这里有一段文字
-          - 这里有一段文字
-        对xxx的态度: 这里有一段文字
+        角色简述: 活泼的向导，对这片区域非常熟悉。
+        状态: 担忧
+        对你的态度: 依赖
 
          堕落值: 45
          进度: 开始堕落，进入堕落中期
-         重要事项: 区域内的电磁干扰正在加强。
+         重要事项: 区域内的电磁干扰正在加强 / 补给品即将耗尽
 
          可能的发展:
-          -  成功突破封锁线
-          -  陷入无尽的巷战
-          -  被赶来的敌人围困
+          - 成功突破封锁线
+          - 陷入无尽的巷战
+          - 被赶来的敌人围困
       选项:
       - A. [强攻] 集中火力攻击正门。
       - B. [潜入] 寻找通风管道绕过守卫。
@@ -437,9 +452,9 @@ const chatdata = `
 `;
 
 const state = reactive<State>({
-  world: { time: '', location: '' },
+  world: { time: '', location: '', weather: '', entropy: '' },
   characters: [],
-  system: {},
+  system: { importantMatters: [] },
   story: { potentialOutcomes: [], options: [] },
   ui: {
     settingsOpen: false,
@@ -464,6 +479,29 @@ const state = reactive<State>({
   currentFloorIndex: -1,
 });
 
+const weatherIcon = computed(() => {
+  const icons: Record<string, string> = {
+    晴朗: '☀️',
+    多云: '☁️',
+    阴天: '🌥️',
+    小雨: '🌧️',
+    暴雨: '⛈️',
+    雪天: '❄️',
+  };
+  return icons[state.world.weather] || '🌡️';
+});
+
+const entropyColor = computed(() => {
+  const colors: Record<string, string> = {
+    '1': 'text-blue-400',
+    '2': 'text-green-400',
+    '3': 'text-yellow-400',
+    '4': 'text-orange-400',
+    '5': 'text-red-500',
+  };
+  return colors[state.world.entropy] || 'text-slate-400';
+});
+
 function parseStatus(text: string) {
   const blockMatch = text.match(/<Status_block>([\s\S]*?)<\/Status_block>/);
   if (!blockMatch) return;
@@ -474,35 +512,31 @@ function parseStatus(text: string) {
   if (timeMatch) state.world.time = timeMatch[1].trim();
   const locationMatch = content.match(/地点:\s*(.*)/);
   if (locationMatch) state.world.location = locationMatch[1].trim();
+  const weatherMatch = content.match(/天气:\s*(.*)/);
+  if (weatherMatch) state.world.weather = weatherMatch[1].trim();
+  const entropyMatch = content.match(/熵值:\s*(.*)/);
+  if (entropyMatch) state.world.entropy = entropyMatch[1].trim();
 
   // Parse Characters
   const charBlocks = content.split(/名字:/).slice(1);
   state.characters = charBlocks.map(block => {
     const lines = block.split('\n');
     const name = lines[0].trim();
+    const descMatch = block.match(/角色简述:\s*(.*)/);
     const statusMatch = block.match(/状态:\s*(.*)/);
     const attitudeMatch = block.match(/对.*的态度:\s*(.*)/);
 
-    const tags: string[] = [];
-    const specificStatusMatch = block.match(/具体状态:([\s\S]*?)(?=\n\s*[^-\s].*[:：]|$)/);
-    if (specificStatusMatch) {
-      const tagLines = specificStatusMatch[1].split('\n');
-      tagLines.forEach(line => {
-        const m = line.match(/-\s*(.*)/);
-        if (m) tags.push(m[1].trim());
-      });
-    }
-
     return {
       name,
+      description: descMatch ? descMatch[1].trim() : '',
       status: statusMatch ? statusMatch[1].trim() : '',
-      tags,
       attitude: attitudeMatch ? attitudeMatch[1].trim() : '',
     };
   });
 
   // Parse System
-  const progressValMatch = content.match(/(.{1,4}值)\s*[:：]\s*(\d+)/);
+  // 匹配系统值时要剔除熵值，使用排除字符集确保不匹配包含“熵”的词
+  const progressValMatch = content.match(/([^\s熵]{1,4}值)\s*[:：]\s*(\d+)/);
   if (progressValMatch) {
     state.system.progressLabel = progressValMatch[1].trim();
     const newVal = parseInt(progressValMatch[2]);
@@ -510,7 +544,7 @@ function parseStatus(text: string) {
     // 计算变动量
     if (state.currentFloorIndex > 0) {
       const prevContent = state.statusFloors[state.currentFloorIndex - 1];
-      const prevMatch = prevContent.match(new RegExp(`${state.system.progressLabel}\\s*[:：]\\s*(\\d+)`));
+      const prevMatch = prevContent.match(new RegExp(`(${state.system.progressLabel})\\s*[:：]\\s*(\\d+)`));
       if (prevMatch) {
         state.system.progressDelta = newVal - parseInt(prevMatch[1]);
       } else {
@@ -525,7 +559,12 @@ function parseStatus(text: string) {
   const progressStatusMatch = content.match(/进度:\s*(.*)/);
   if (progressStatusMatch) state.system.progressStatus = progressStatusMatch[1].trim();
   const importantMatch = content.match(/重要事项:\s*(.*)/);
-  if (importantMatch) state.system.importantMatter = importantMatch[1].trim();
+  if (importantMatch) {
+    state.system.importantMatters = importantMatch[1]
+      .split('/')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  }
 
   // Parse Story
   const outcomesMatch = content.match(/可能的发展:([\s\S]*?)(?=选项|$)/);
