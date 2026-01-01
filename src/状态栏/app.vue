@@ -545,8 +545,9 @@ function parseStatus(text: string) {
     if (state.currentFloorIndex > 0) {
       const prevContent = state.statusFloors[state.currentFloorIndex - 1];
       const prevMatch = prevContent.match(new RegExp(`(${state.system.progressLabel})\\s*[:：]\\s*(\\d+)`));
-      if (prevMatch) {
-        state.system.progressDelta = newVal - parseInt(prevMatch[1]);
+      if (prevMatch && prevMatch[2]) {
+        const prevVal = parseInt(prevMatch[2]);
+        state.system.progressDelta = isNaN(prevVal) ? undefined : newVal - prevVal;
       } else {
         state.system.progressDelta = undefined;
       }
