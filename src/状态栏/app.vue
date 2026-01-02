@@ -145,16 +145,15 @@
                 }}</span>
               </div>
               <div class="grid grid-cols-1 gap-3 rounded-xl border border-white/20 bg-black/30 p-3">
-                <div v-if="char.description">
-                  <div class="mb-1 text-[8px] font-bold tracking-wider text-slate-500 uppercase">角色简述</div>
-                  <div class="text-[11px] leading-relaxed break-words whitespace-pre-wrap text-slate-300">
-                    {{ char.description }}
-                  </div>
-                </div>
-                <div class="flex justify-between border-t border-white/5 pt-2">
-                  <div class="text-left">
-                    <div class="mb-1 text-[8px] font-bold tracking-wider text-slate-500 uppercase">态度</div>
-                    <div class="text-[11px] leading-tight font-medium text-pink-300">{{ char.attitude }}</div>
+                <div v-for="(value, key) in char.details" :key="key" class="group/item">
+                  <div class="mb-1 text-[8px] font-bold tracking-wider text-slate-500 uppercase">{{ key }}</div>
+                  <div
+                    :class="[
+                      'text-[11px] leading-relaxed break-words whitespace-pre-wrap',
+                      key.includes('态度') ? 'font-medium text-pink-300' : 'text-slate-300',
+                    ]"
+                  >
+                    {{ value }}
                   </div>
                 </div>
               </div>
@@ -372,9 +371,8 @@ function deepClone<T>(obj: T): T {
 
 interface Character {
   name: string;
-  description: string;
   status: string;
-  attitude: string;
+  details: Record<string, string>;
 }
 
 interface Option {
@@ -430,14 +428,18 @@ const chatdata = `
         角色简述: 这里的义体医生，性格冷淡但医术高超。
         状态: 警戒 / 义体过热
         对你的态度: 信任但充满疑虑
-名字: 由莉
-        角色简述: 活泼的向导，对这片区域非常熟悉。
-        状态: 担忧
-        对你的态度: 依赖
+名字: 由莉·奥菲利斯
+        角色简述: 23岁普通公司职员，刚签订体验契约的新访客
+        状态: 极度疼痛 / 精疲力竭 / 内心深处的满足感 / 身体持续兴奋
+        当前装备: 黑色皮质项圈（带银铃）/ 皮革手铐（吊挂于天花板锁链）/ 金属脚铐（短链）
+        身体状态: 全裸，臀部/大腿/后背/腰侧布满密集鞭痕（共计30鞭），部分区域可能有轻微渗血，私处持续分泌液体
+        契约状态: 体验契约已生效（0/3次服务完成）
 
          堕落值: 45
          进度: 开始堕落，进入堕落中期
-         重要事项: 区域内的电磁干扰正在加强 / 补给品即将耗尽
+         重要事项:
+          - 区域内的电磁干扰正在加强
+          - 补给品即将耗尽
 
          可能的发展:
           - 成功突破封锁线
@@ -518,19 +520,32 @@ function parseStatus(text: string) {
   if (entropyMatch) state.world.entropy = entropyMatch[1].trim();
 
   // Parse Characters
-  const charBlocks = content.split(/名字:/).slice(1);
+  // 使用更精确的正则匹配角色块，直到遇到双换行或下一个“名字:”或系统关键词
+  const charBlocks =
+    content.match(/名字:[\s\S]*?(?=\n\s*\n|\n\s*名字:|\n\s*重要事项:|\n\s*可能的发展:|\n\s*选项:|$)/g) || [];
   state.characters = charBlocks.map(block => {
     const lines = block.split('\n');
-    const name = lines[0].trim();
-    const descMatch = block.match(/角色简述:\s*(.*)/);
+    const name = lines[0].replace('名字:', '').trim();
     const statusMatch = block.match(/状态:\s*(.*)/);
-    const attitudeMatch = block.match(/对.*的态度:\s*(.*)/);
+
+    const details: Record<string, string> = {};
+    // 匹配所有 键: 值 格式
+    const kvRegex = /^\s*([^:：\-\s]+)[:：]\s*(.*)/gm;
+    let match;
+    const excludedKeys = ['名字', '状态', '时间', '地点', '天气', '熵值', '重要事项', '可能的发展', '选项', '进度'];
+
+    while ((match = kvRegex.exec(block)) !== null) {
+      const key = match[1].trim();
+      const value = match[2].trim();
+      if (!excludedKeys.includes(key) && !key.endsWith('值')) {
+        details[key] = value;
+      }
+    }
 
     return {
       name,
-      description: descMatch ? descMatch[1].trim() : '',
       status: statusMatch ? statusMatch[1].trim() : '',
-      attitude: attitudeMatch ? attitudeMatch[1].trim() : '',
+      details,
     };
   });
 
@@ -559,12 +574,12 @@ function parseStatus(text: string) {
   }
   const progressStatusMatch = content.match(/进度:\s*(.*)/);
   if (progressStatusMatch) state.system.progressStatus = progressStatusMatch[1].trim();
-  const importantMatch = content.match(/重要事项:\s*(.*)/);
+  const importantMatch = content.match(/重要事项:([\s\S]*?)(?=\n\s*[^\-\s]|$)/);
   if (importantMatch) {
     state.system.importantMatters = importantMatch[1]
-      .split('/')
-      .map(item => item.trim())
-      .filter(item => item.length > 0);
+      .split('\n')
+      .map(line => line.match(/-\s*(.*)/)?.[1]?.trim())
+      .filter((item): item is string => !!item);
   }
 
   // Parse Story
